@@ -2,6 +2,8 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Painel de Entregas RDO</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
@@ -19,8 +21,10 @@ body{
 background:#1f2329;
 color:white;
 text-align:center;
+min-height:100vh;
 }
 
+/* HEADER */
 header{
 background:#2b3038;
 padding:20px 40px;
@@ -37,18 +41,21 @@ border-radius:6px;
 cursor:pointer;
 background:#3a3f48;
 color:white;
+transition:0.2s;
 }
 
 button:hover{
 background:#505662;
 }
 
+/* CONTAINER */
 .container{
 max-width:1000px;
 margin:auto;
 padding:40px 20px;
 }
 
+/* ÁREAS */
 .area-buttons{
 display:grid;
 grid-template-columns:repeat(4,1fr);
@@ -62,6 +69,11 @@ padding:25px;
 border-radius:10px;
 cursor:pointer;
 box-shadow:0 6px 20px rgba(0,0,0,0.4);
+transition:0.2s;
+}
+
+.area-btn:hover{
+transform:translateY(-3px);
 }
 
 .area-btn span{
@@ -70,6 +82,7 @@ font-size:28px;
 margin-bottom:8px;
 }
 
+/* CARDS */
 .cards{
 display:flex;
 justify-content:center;
@@ -86,33 +99,7 @@ box-shadow:0 6px 20px rgba(0,0,0,0.4);
 min-width:200px;
 }
 
-.calendar{
-margin-top:40px;
-display:grid;
-grid-template-columns:repeat(7,1fr);
-gap:10px;
-}
-
-.day{
-background:#2b3038;
-padding:16px;
-border-radius:6px;
-box-shadow:0 3px 10px rgba(0,0,0,0.4);
-cursor:pointer;
-}
-
-.entregue{
-background:#2f7d48;
-}
-
-.pendente{
-background:#7d2f2f;
-}
-
-.fimSemana{
-background:#3a3f48;
-}
-
+/* SELECT */
 select{
 padding:8px;
 margin-top:15px;
@@ -122,101 +109,109 @@ background:#3a3f48;
 color:white;
 }
 
+/* CALENDÁRIO */
+.calendar{
+margin:20px auto;
+display:grid;
+grid-template-columns:repeat(7,minmax(0,1fr));
+gap:6px;
+max-width:420px;
+}
+
+.day{
+background:#2b3038;
+aspect-ratio:1/1;
+display:flex;
+align-items:center;
+justify-content:center;
+border-radius:6px;
+font-size:14px;
+box-shadow:0 3px 10px rgba(0,0,0,0.4);
+cursor:pointer;
+transition:0.2s;
+}
+
+.day:active{
+transform:scale(0.95);
+}
+
+.entregue{
+background:#2d9b5f;
+}
+
+.pendente{
+background:#a13a3a;
+}
+
+.fimSemana{
+background:#3a3f48;
+}
+
 .futuro{
 background:#2a2f36;
-opacity:0.6;
+opacity:0.5;
 cursor:default;
 }
 
+.hoje{
+outline:2px solid #5cff8f;
+}
 
-/* 📱 MOBILE PROFISSIONAL (ENTREGAS) */
-@media (max-width: 768px){
+/* 📱 MOBILE */
+@media (max-width:768px){
 
-/* HEADER */
 header{
 flex-direction:column;
 padding:15px;
 gap:10px;
-text-align:center;
 }
 
 header h1{
 font-size:18px;
 }
 
-/* CONTAINER */
 .container{
 padding:20px 12px;
 }
 
-/* ÁREAS MAIS BONITAS */
 .area-buttons{
 grid-template-columns:1fr 1fr;
 gap:10px;
-margin-top:15px;
 }
 
 .area-btn{
 padding:15px;
 font-size:14px;
-border-radius:8px;
 }
 
 .area-btn span{
 font-size:20px;
 }
 
-/* TITULO */
-h2{
-font-size:18px;
-margin-top:10px;
-}
-
-/* SELECT MELHOR */
-select{
-width:100%;
-margin-top:10px;
-padding:10px;
-font-size:15px;
-}
-
-/* CARDS STATUS */
 .cards{
 flex-direction:column;
 gap:10px;
-margin-top:20px;
 }
 
 .card{
 width:100%;
-padding:12px;
+padding:14px;
 font-size:14px;
 }
 
-/* CALENDÁRIO AJUSTADO */
-.calendar{
-gap:4px;
-margin-top:20px;
+select{
+width:100%;
+padding:12px;
+font-size:15px;
 }
 
-.day{
-padding:8px 4px;
-font-size:12px;
-border-radius:4px;
-}
-
-/* REMOVE ESPAÇO GIGANTE */
-body{
-overflow-x:hidden;
-}
-
-/* CENTRALIZA TUDO MELHOR */
-#infoArea{
+button{
+width:100%;
 margin-top:10px;
+font-size:14px;
 }
 
 }
-
 
 </style>
 </head>
@@ -224,11 +219,8 @@ margin-top:10px;
 <body>
 
 <header>
-
 <h1>Painel de Entregas RDO</h1>
-
 <button onclick="window.location.href='index.html'">Início</button>
-
 </header>
 
 <div class="container">
@@ -260,7 +252,6 @@ margin-top:10px;
 <h2 id="tituloArea" style="margin-top:30px;"></h2>
 
 <select id="mesFiltro" onchange="gerarCalendario()">
-
 <option>Janeiro</option>
 <option>Fevereiro</option>
 <option>Marco</option>
@@ -273,7 +264,6 @@ margin-top:10px;
 <option>Outubro</option>
 <option>Novembro</option>
 <option>Dezembro</option>
-
 </select>
 
 <div class="cards">
@@ -316,7 +306,6 @@ document.getElementById("tituloArea").innerText=area
 mesAtual = document.getElementById("mesFiltro").value
 
 gerarCalendario()
-
 }
 
 function gerarCalendario(){
@@ -337,7 +326,6 @@ if(!mesKey) return
 
 const arquivos = data[ano][areaKey][mesKey]
 
-// 🔥 pega dias do formato 03.03.pdf
 let diasEntregues = arquivos.map(nome => parseInt(nome.split(".")[0]))
 
 const calendar=document.getElementById("calendar")
@@ -349,7 +337,6 @@ let meses = [
 ]
 
 let mesIndex = meses.findIndex(m => m.toLowerCase() === mesAtual.toLowerCase())
-
 let diasNoMes = new Date(ano, mesIndex+1, 0).getDate()
 
 let entreguesCount=0
@@ -378,6 +365,10 @@ let div=document.createElement("div")
 div.classList.add("day")
 div.innerText=d
 
+if(d === diaAtual && isMesAtual){
+div.classList.add("hoje")
+}
+
 if(diaSemana==0 || diaSemana==6){
 
 div.classList.add("fimSemana")
@@ -398,15 +389,18 @@ window.open(`/arquivos/${ano}/${areaKey}/${mesKey}/${arquivo}`)
 
 }else{
 
+if(isMesAtual && d > diaAtual){
+div.classList.add("futuro")
+}else{
 div.classList.add("pendente")
 pendentesCount++
+}
 
 }
 
 }
 
 calendar.appendChild(div)
-
 }
 
 document.getElementById("entregues").innerText=entreguesCount
