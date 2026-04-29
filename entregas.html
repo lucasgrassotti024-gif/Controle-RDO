@@ -326,7 +326,10 @@ if(!mesKey) return
 
 const arquivos = data[ano][areaKey][mesKey]
 
-let diasEntregues = arquivos.map(nome => parseInt(nome.split(".")[0]))
+let diasEntregues = arquivos.map(nome => {
+let match = nome.match(/^(\d{2})/)
+return match ? parseInt(match[1]) : null
+}).filter(Boolean)
 
 const calendar=document.getElementById("calendar")
 calendar.innerHTML=""
@@ -381,9 +384,10 @@ div.classList.add("entregue")
 entreguesCount++
 
 div.onclick = () => {
-let arquivo = arquivos.find(a => a.startsWith(String(d).padStart(2,'0')))
-if(arquivo){
-window.open(`/arquivos/${ano}/${areaKey}/${mesKey}/${arquivo}`)
+let arquivosDoDia = arquivos.filter(a => a.startsWith(String(d).padStart(2,'0')))
+
+if(arquivosDoDia.length > 0){
+window.open(`/arquivos/${ano}/${areaKey}/${mesKey}/${arquivosDoDia[0]}`)
 }
 }
 
