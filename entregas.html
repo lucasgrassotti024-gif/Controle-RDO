@@ -215,9 +215,10 @@ font-size:14px;
 
 
 .feriado{
-background:#ffffff;
-color:#000;
+background:#f1f1f1;
+color:#111;
 font-weight:600;
+border:2px solid #ffffff30;
 }
 
 </style>
@@ -415,7 +416,11 @@ if(d === diaAtual && isMesAtual){
 div.classList.add("hoje")
 }
 
-if(diaSemana==0 || diaSemana==6 || isFeriado){
+if(isFeriado){
+
+div.classList.add("feriado")
+
+}else if(diaSemana==0 || diaSemana==6){
 
 div.classList.add("fimSemana")
 
