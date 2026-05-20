@@ -213,6 +213,13 @@ font-size:14px;
 
 }
 
+
+.feriado{
+background:#ffffff;
+color:#000;
+font-weight:600;
+}
+
 </style>
 </head>
 
@@ -296,6 +303,36 @@ font-size:14px;
 let areaAtual=""
 let mesAtual=""
 
+/*
+FORMATO:
+"DD.MM"
+
+Exemplo:
+"25.12" = 25 de dezembro
+*/
+
+const feriados = [
+
+/* 2026 */
+
+"01.01", // Confraternização Universal
+"16.02", // Carnaval
+"17.02", // Carnaval
+"03.04", // Sexta-feira Santa
+
+"20.04", // Folga empresa
+"21.04", // Tiradentes
+
+"01.05", // Dia do Trabalhador
+"04.06", // Corpus Christi
+"07.09", // Independência
+"12.10", // Nossa Senhora
+"02.11", // Finados
+"15.11", // Proclamação
+"25.12"  // Natal
+
+]
+
 function selecionarArea(area){
 
 areaAtual = area
@@ -368,11 +405,17 @@ let div=document.createElement("div")
 div.classList.add("day")
 div.innerText=d
 
+let dataFormatada =
+String(d).padStart(2,'0') + "." +
+String(mesIndex + 1).padStart(2,'0')
+
+let isFeriado = feriados.includes(dataFormatada)
+
 if(d === diaAtual && isMesAtual){
 div.classList.add("hoje")
 }
 
-if(diaSemana==0 || diaSemana==6){
+if(diaSemana==0 || diaSemana==6 || isFeriado){
 
 div.classList.add("fimSemana")
 
