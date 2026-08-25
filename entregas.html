@@ -431,12 +431,12 @@ if(diasEntregues.includes(d)){
 div.classList.add("entregue")
 entreguesCount++
 
-div.onclick = () => {
-let arquivosDoDia = arquivos.filter(a => a.startsWith(String(d).padStart(2,'0')))
-
-if(arquivosDoDia.length > 0){
+div.onclick = () => { 
+let arquivosDoDia = arquivos.filter(a => a.startsWith(String(d).padStart(2,'0'))) 
+    
+if(arquivosDoDia.length > 0){ 
 window.open(`/arquivos/${ano}/${areaKey}/${mesKey}/${arquivosDoDia[0]}`)
-}
+} 
 }
 
 }else{
