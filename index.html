@@ -7,8 +7,6 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
 <style>
 
 *{
@@ -34,7 +32,25 @@ box-shadow:0 4px 18px rgba(0,0,0,0.5);
 
 .navButtons{
 display:flex;
+align-items:center;
 gap:10px;
+}
+
+.anoSelect{
+padding:9px 14px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+background:#3a3f48;
+color:white;
+font-size:14px;
+font-weight:600;
+outline:none;
+transition:0.2s;
+}
+
+.anoSelect:hover{
+background:#505662;
 }
 
 button{
@@ -50,6 +66,12 @@ transition:0.2s;
 button:hover{
 background:#505662;
 transform:translateY(-2px);
+}
+
+button:disabled{
+opacity:0.6;
+cursor:not-allowed;
+transform:none;
 }
 
 .container{
@@ -78,12 +100,53 @@ box-shadow:0 8px 25px rgba(0,0,0,0.4);
 cursor:pointer;
 font-size:20px;
 font-weight:600;
+position:relative;
+transition:0.2s;
+}
+
+.card:hover{
+transform:translateY(-3px);
+background:#343942;
 }
 
 .card span{
 font-size:32px;
 display:block;
 margin-bottom:10px;
+}
+
+.card .badge{
+display:inline-block;
+margin-top:8px;
+font-size:12px;
+font-weight:400;
+color:#9aa0a6;
+background:#1f2329;
+padding:3px 10px;
+border-radius:12px;
+}
+
+.search-box{
+margin-top:20px;
+display:flex;
+justify-content:center;
+}
+
+.search-box input{
+width:100%;
+max-width:320px;
+padding:10px 16px;
+border-radius:6px;
+border:none;
+background:#2b3038;
+color:white;
+font-size:14px;
+outline:none;
+box-shadow:0 4px 14px rgba(0,0,0,0.3);
+}
+
+.search-box input:focus{
+border:1px solid #5cff8f;
 }
 
 .gallery{
@@ -99,12 +162,35 @@ padding:20px;
 border-radius:10px;
 box-shadow:0 6px 20px rgba(0,0,0,0.4);
 cursor:pointer;
+transition:0.2s;
 }
 
 .cardRDO:hover{
 background:#343942;
+transform:translateY(-2px);
 }
 
+/* Indicador de carregamento / feedback */
+.toast-msg{
+position:fixed;
+bottom:25px;
+right:25px;
+background:#2b3038;
+color:#fff;
+border:1px solid #3a3f48;
+padding:12px 20px;
+border-radius:8px;
+box-shadow:0 8px 25px rgba(0,0,0,0.6);
+display:none;
+z-index:9999;
+font-size:14px;
+align-items:center;
+gap:10px;
+}
+
+.toast-msg.show{
+display:flex;
+}
 
 /* 📱 MOBILE RESPONSIVO */
 @media (max-width: 768px){
@@ -154,7 +240,7 @@ font-size:16px;
 }
 
 /* BOTÕES */
-button{
+button, .anoSelect{
 width:100%;
 padding:12px;
 font-size:16px;
@@ -186,7 +272,6 @@ margin-bottom:15px;
 
 }
 
-
 </style>
 </head>
 
@@ -197,6 +282,8 @@ margin-bottom:15px;
 <h1>Controle de RDO</h1>
 
 <div class="navButtons">
+
+<select id="anoSelector" class="anoSelect" onchange="trocarAno(this.value)"></select>
 
 <button id="btnVoltar" onclick="voltarPagina()">⬅ Voltar</button>
 
@@ -218,18 +305,22 @@ Entregas
 
 <div class="card" onclick="abrirArea('Civil')">
 <span>🏗</span>Civil
+<div class="badge" id="badge-Civil">0 RDOs</div>
 </div>
 
 <div class="card" onclick="abrirArea('laminacao')">
 <span>🧵</span>Laminação
+<div class="badge" id="badge-laminacao">0 RDOs</div>
 </div>
 
 <div class="card" onclick="abrirArea('Isolamento')">
 <span>🧊</span>Isolamento
+<div class="badge" id="badge-Isolamento">0 RDOs</div>
 </div>
 
 <div class="card" onclick="abrirArea('Pintura')">
 <span>🎨</span>Pintura
+<div class="badge" id="badge-Pintura">0 RDOs</div>
 </div>
 
 </div>
@@ -243,23 +334,23 @@ Entregas
 <h2 id="tituloArea"></h2>
 
 <!-- 🔥 BOTÃO PDF -->
-<button onclick="abrirMenuPDF()">📄 PDF</button>
+<button id="btnMenuPDF" onclick="abrirMenuPDF()">📄 PDF por Período</button>
 <div id="menuPDF" style="margin-top:15px;"></div>
 
-<div class="grid">
+<div class="grid" id="gridMeses">
 
-<div class="card" onclick="abrirMes('Janeiro')">Janeiro</div>
-<div class="card" onclick="abrirMes('Fevereiro')">Fevereiro</div>
-<div class="card" onclick="abrirMes('Marco')">Março</div>
-<div class="card" onclick="abrirMes('Abril')">Abril</div>
-<div class="card" onclick="abrirMes('Maio')">Maio</div>
-<div class="card" onclick="abrirMes('Junho')">Junho</div>
-<div class="card" onclick="abrirMes('Julho')">Julho</div>
-<div class="card" onclick="abrirMes('Agosto')">Agosto</div>
-<div class="card" onclick="abrirMes('Setembro')">Setembro</div>
-<div class="card" onclick="abrirMes('Outubro')">Outubro</div>
-<div class="card" onclick="abrirMes('Novembro')">Novembro</div>
-<div class="card" onclick="abrirMes('Dezembro')">Dezembro</div>
+<div class="card" onclick="abrirMes('Janeiro')">Janeiro<div class="badge" id="badge-Janeiro"></div></div>
+<div class="card" onclick="abrirMes('Fevereiro')">Fevereiro<div class="badge" id="badge-Fevereiro"></div></div>
+<div class="card" onclick="abrirMes('Marco')">Março<div class="badge" id="badge-Marco"></div></div>
+<div class="card" onclick="abrirMes('Abril')">Abril<div class="badge" id="badge-Abril"></div></div>
+<div class="card" onclick="abrirMes('Maio')">Maio<div class="badge" id="badge-Maio"></div></div>
+<div class="card" onclick="abrirMes('Junho')">Junho<div class="badge" id="badge-Junho"></div></div>
+<div class="card" onclick="abrirMes('Julho')">Julho<div class="badge" id="badge-Julho"></div></div>
+<div class="card" onclick="abrirMes('Agosto')">Agosto<div class="badge" id="badge-Agosto"></div></div>
+<div class="card" onclick="abrirMes('Setembro')">Setembro<div class="badge" id="badge-Setembro"></div></div>
+<div class="card" onclick="abrirMes('Outubro')">Outubro<div class="badge" id="badge-Outubro"></div></div>
+<div class="card" onclick="abrirMes('Novembro')">Novembro<div class="badge" id="badge-Novembro"></div></div>
+<div class="card" onclick="abrirMes('Dezembro')">Dezembro<div class="badge" id="badge-Dezembro"></div></div>
 
 </div>
 
@@ -271,145 +362,290 @@ Entregas
 
 <h2 id="tituloMes"></h2>
 
-<button onclick="gerarPDFMes()">📄 Gerar PDF do mês</button>
+<button id="btnGerarPDFMes" onclick="gerarPDFMes()">📄 Gerar PDF do mês</button>
+
+<div class="search-box">
+  <input type="text" id="filtroRDO" placeholder="Buscar RDO (ex: 05, 23, nome...)" onkeyup="filtrarListaRDO()">
+</div>
 
 <div class="gallery" id="listaRDOs"></div>
 
 </div>
 
+<!-- Toast feedback -->
+<div id="toast" class="toast-msg"></div>
+
 <script>
 
+let dadosRDO = {}
+let anoAtual = ""
 let areaAtual = ""
 let mesAtual = ""
+let arquivosMesAtual = []
 
-function atualizarBotaoVoltar(){
-const btn = document.getElementById("btnVoltar")
-btn.style.display = document.getElementById("areasPage").classList.contains("hidden") ? "block" : "none"
-}
-
-function abrirArea(area){
-areaAtual = area
-document.getElementById("areasPage").classList.add("hidden")
-document.getElementById("mesesPage").classList.remove("hidden")
-document.getElementById("tituloArea").innerText = area
-atualizarBotaoVoltar()
-}
-
-function abrirMes(mes){
-mesAtual = mes
-document.getElementById("mesesPage").classList.add("hidden")
-document.getElementById("rdoPage").classList.remove("hidden")
-document.getElementById("tituloMes").innerText = areaAtual + " - " + mes
-carregarRDOs()
-atualizarBotaoVoltar()
-}
-
-function voltarPagina(){
-if(!document.getElementById("rdoPage").classList.contains("hidden")){
-document.getElementById("rdoPage").classList.add("hidden")
-document.getElementById("mesesPage").classList.remove("hidden")
-}else{
-document.getElementById("mesesPage").classList.add("hidden")
-document.getElementById("areasPage").classList.remove("hidden")
-}
-atualizarBotaoVoltar()
-}
-
-async function carregarRDOs(){
-
-const lista = document.getElementById("listaRDOs")
-lista.innerHTML = "Carregando..."
-
-try{
-
-const res = await fetch("/api/rdos")
-const data = await res.json()
-
-const ano = Object.keys(data)[0]
-
-const normalizar = (txt) =>
-txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
-
-const areaKey = Object.keys(data[ano]).find(a => normalizar(a) === normalizar(areaAtual))
-const mesKey = Object.keys(data[ano][areaKey]).find(m => normalizar(m) === normalizar(mesAtual))
-
-const arquivos = data[ano][areaKey][mesKey]
-
-lista.innerHTML = ""
-
-arquivos.forEach(nome => {
-
-let dataFormatada = nome.replace(/\.(pdf|jpg|jpeg|png)$/i, "")
-
-let card = document.createElement("div")
-card.classList.add("cardRDO")
-
-card.innerHTML = `<h3>${dataFormatada}</h3>`
-
-card.onclick = () => {
-window.open(`/arquivos/${ano}/${areaKey}/${mesKey}/${encodeURIComponent(nome)}`)
-}
-
-lista.appendChild(card)
-
-})
-
-}catch{
-lista.innerHTML = "Erro ao carregar"
-}
-
-}
-
-function abrirMenuPDF(){
-
-const menu = document.getElementById("menuPDF")
-
-if(menu.innerHTML !== ""){
-menu.innerHTML = ""
-return
-}
-
-let meses = [
-"Janeiro","Fevereiro","Marco","Abril","Maio","Junho",
-"Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"
-]
-
-meses.forEach((mes,i)=>{
-
-let proximo = meses[(i+1)%12]
-
-let btn = document.createElement("button")
-btn.innerText = `${mes} → ${proximo}`
-btn.style.margin="5px"
-
-btn.onclick = () => gerarPDFPeriodo(mes,proximo)
-
-menu.appendChild(btn)
-
-})
-
+function mostrarToast(mensagem, duracao = 3000){
+  const toast = document.getElementById("toast")
+  toast.innerText = mensagem
+  toast.classList.add("show")
+  setTimeout(() => {
+    toast.classList.remove("show")
+  }, duracao)
 }
 
 function normalizar(txt){
-return txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+  return (txt || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
 }
 
-function gerarPDFPeriodo(m1, m2){
+function atualizarBotaoVoltar(){
+  const btn = document.getElementById("btnVoltar")
+  btn.style.display = document.getElementById("areasPage").classList.contains("hidden") ? "block" : "none"
+}
 
-const url = `/api/pdf-periodo?area=${encodeURIComponent(areaAtual)}&mes1=${encodeURIComponent(normalizar(m1))}&mes2=${encodeURIComponent(normalizar(m2))}`
+async function inicializarDados(){
+  try{
+    const res = await fetch("/api/rdos")
+    dadosRDO = await res.json()
 
-window.open(url, "_blank")
+    const anos = Object.keys(dadosRDO)
+    if(anos.length === 0) return
 
+    const select = document.getElementById("anoSelector")
+    select.innerHTML = ""
+    anos.forEach(ano => {
+      const opt = document.createElement("option")
+      opt.value = ano
+      opt.innerText = ano
+      select.appendChild(opt)
+    })
+
+    // Salva ou recupera ano
+    const anoSalvo = localStorage.getItem("anoRDO")
+    anoAtual = (anoSalvo && anos.includes(anoSalvo)) ? anoSalvo : anos[anos.length - 1]
+    select.value = anoAtual
+
+    atualizarBadgesAreas()
+  }catch(e){
+    console.error("Erro ao carregar dados:", e)
+  }
+}
+
+function trocarAno(novoAno){
+  anoAtual = novoAno
+  localStorage.setItem("anoRDO", anoAtual)
+  atualizarBadgesAreas()
+  if(!document.getElementById("mesesPage").classList.contains("hidden")){
+    atualizarBadgesMeses()
+  }
+  if(!document.getElementById("rdoPage").classList.contains("hidden")){
+    carregarRDOs()
+  }
+}
+
+function obterAreaKey(areaNome){
+  if(!dadosRDO[anoAtual]) return null
+  return Object.keys(dadosRDO[anoAtual]).find(a => normalizar(a) === normalizar(areaNome))
+}
+
+function obterMesKey(areaKey, mesNome){
+  if(!dadosRDO[anoAtual] || !dadosRDO[anoAtual][areaKey]) return null
+  return Object.keys(dadosRDO[anoAtual][areaKey]).find(m => normalizar(m) === normalizar(mesNome))
+}
+
+function atualizarBadgesAreas(){
+  const areas = ["Civil", "laminacao", "Isolamento", "Pintura"]
+  areas.forEach(area => {
+    const el = document.getElementById("badge-" + area)
+    if(!el) return
+    let total = 0
+    const aKey = obterAreaKey(area)
+    if(aKey && dadosRDO[anoAtual] && dadosRDO[anoAtual][aKey]){
+      Object.values(dadosRDO[anoAtual][aKey]).forEach(lista => {
+        if(Array.isArray(lista)) total += lista.length
+      })
+    }
+    el.innerText = total + " RDOs"
+  })
+}
+
+function atualizarBadgesMeses(){
+  const meses = [
+    "Janeiro","Fevereiro","Marco","Abril","Maio","Junho",
+    "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"
+  ]
+  const aKey = obterAreaKey(areaAtual)
+  meses.forEach(mes => {
+    const el = document.getElementById("badge-" + mes)
+    if(!el) return
+    let qtd = 0
+    if(aKey){
+      const mKey = obterMesKey(aKey, mes)
+      if(mKey && dadosRDO[anoAtual][aKey][mKey]){
+        qtd = dadosRDO[anoAtual][aKey][mKey].length
+      }
+    }
+    el.innerText = qtd > 0 ? qtd + " RDOs" : "Vazio"
+  })
+}
+
+function abrirArea(area){
+  areaAtual = area
+  document.getElementById("areasPage").classList.add("hidden")
+  document.getElementById("mesesPage").classList.remove("hidden")
+  document.getElementById("tituloArea").innerText = area
+  
+  // Limpar menu de PDF se estiver aberto
+  document.getElementById("menuPDF").innerHTML = ""
+  
+  atualizarBadgesMeses()
+  atualizarBotaoVoltar()
+}
+
+function abrirMes(mes){
+  mesAtual = mes
+  document.getElementById("mesesPage").classList.add("hidden")
+  document.getElementById("rdoPage").classList.remove("hidden")
+  document.getElementById("tituloMes").innerText = `${areaAtual} - ${mes} (${anoAtual})`
+  document.getElementById("filtroRDO").value = ""
+  carregarRDOs()
+  atualizarBotaoVoltar()
+}
+
+function voltarPagina(){
+  if(!document.getElementById("rdoPage").classList.contains("hidden")){
+    document.getElementById("rdoPage").classList.add("hidden")
+    document.getElementById("mesesPage").classList.remove("hidden")
+    atualizarBadgesMeses()
+  }else{
+    document.getElementById("mesesPage").classList.add("hidden")
+    document.getElementById("areasPage").classList.remove("hidden")
+    atualizarBadgesAreas()
+  }
+  atualizarBotaoVoltar()
+}
+
+function renderizarListaRDO(arquivos){
+  const lista = document.getElementById("listaRDOs")
+  lista.innerHTML = ""
+
+  if(!arquivos || arquivos.length === 0){
+    lista.innerHTML = "<p style='grid-column: 1/-1; color:#9aa0a6;'>Nenhum RDO encontrado.</p>"
+    return
+  }
+
+  const aKey = obterAreaKey(areaAtual)
+  const mKey = obterMesKey(aKey, mesAtual)
+
+  arquivos.forEach(nome => {
+    let dataFormatada = nome.replace(/\.(pdf|jpg|jpeg|png)$/i, "")
+
+    let card = document.createElement("div")
+    card.classList.add("cardRDO")
+    card.innerHTML = `<h3>${dataFormatada}</h3>`
+
+    card.onclick = () => {
+      window.open(`/arquivos/${anoAtual}/${aKey}/${mKey}/${encodeURIComponent(nome)}`)
+    }
+
+    lista.appendChild(card)
+  })
+}
+
+function filtrarListaRDO(){
+  const query = normalizar(document.getElementById("filtroRDO").value)
+  if(!query){
+    renderizarListaRDO(arquivosMesAtual)
+    return
+  }
+  const filtrados = arquivosMesAtual.filter(nome => normalizar(nome).includes(query))
+  renderizarListaRDO(filtrados)
+}
+
+async function carregarRDOs(){
+  const lista = document.getElementById("listaRDOs")
+  lista.innerHTML = "Carregando..."
+
+  try{
+    const aKey = obterAreaKey(areaAtual)
+    const mKey = obterMesKey(aKey, mesAtual)
+
+    if(!aKey || !mKey || !dadosRDO[anoAtual] || !dadosRDO[anoAtual][aKey] || !dadosRDO[anoAtual][aKey][mKey]){
+      arquivosMesAtual = []
+    } else {
+      arquivosMesAtual = [...dadosRDO[anoAtual][aKey][mKey]]
+      // Ordenação numérica dos dias
+      arquivosMesAtual.sort((a,b)=>{
+        const da = parseInt(a.split(".")[0]) || 0
+        const db = parseInt(b.split(".")[0]) || 0
+        return da - db
+      })
+    }
+
+    renderizarListaRDO(arquivosMesAtual)
+  }catch(e){
+    lista.innerHTML = "Erro ao carregar RDOs"
+  }
+}
+
+function abrirMenuPDF(){
+  const menu = document.getElementById("menuPDF")
+
+  if(menu.innerHTML !== ""){
+    menu.innerHTML = ""
+    return
+  }
+
+  let meses = [
+    "Janeiro","Fevereiro","Marco","Abril","Maio","Junho",
+    "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"
+  ]
+
+  meses.forEach((mes,i)=>{
+    let proximo = meses[(i+1)%12]
+
+    let btn = document.createElement("button")
+    btn.innerText = `${mes} → ${proximo}`
+    btn.style.margin="5px"
+
+    btn.onclick = () => gerarPDFPeriodo(mes, proximo, btn)
+
+    menu.appendChild(btn)
+  })
+}
+
+function gerarPDFPeriodo(m1, m2, btnElement){
+  mostrarToast(`Gerando PDF do período ${m1} → ${m2}...`)
+  if(btnElement){
+    const textoOriginal = btnElement.innerText
+    btnElement.innerText = "⏳ Gerando..."
+    btnElement.disabled = true
+    setTimeout(() => {
+      btnElement.innerText = textoOriginal
+      btnElement.disabled = false
+    }, 4000)
+  }
+
+  const url = `/api/pdf-periodo?ano=${encodeURIComponent(anoAtual)}&area=${encodeURIComponent(areaAtual)}&mes1=${encodeURIComponent(normalizar(m1))}&mes2=${encodeURIComponent(normalizar(m2))}`
+  window.open(url, "_blank")
+}
+
+function gerarPDFMes(){
+  const btn = document.getElementById("btnGerarPDFMes")
+  mostrarToast(`Gerando PDF consolidado de ${mesAtual}...`)
+  
+  const textoOriginal = btn.innerText
+  btn.innerText = "⏳ Gerando PDF..."
+  btn.disabled = true
+  setTimeout(() => {
+    btn.innerText = textoOriginal
+    btn.disabled = false
+  }, 4000)
+
+  const url = `/api/pdf-mes?ano=${encodeURIComponent(anoAtual)}&area=${encodeURIComponent(areaAtual)}&mes=${encodeURIComponent(normalizar(mesAtual))}`
+  window.open(url, "_blank")
 }
 
 atualizarBotaoVoltar()
-
-
-
-function gerarPDFMes(){
-const url = `/api/pdf-mes?area=${encodeURIComponent(areaAtual)}&mes=${encodeURIComponent(normalizar(mesAtual))}`
-window.open(url, "_blank")
-}
+inicializarDados()
 
 </script>
 

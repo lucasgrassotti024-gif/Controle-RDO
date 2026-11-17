@@ -34,6 +34,29 @@ align-items:center;
 box-shadow:0 4px 18px rgba(0,0,0,0.5);
 }
 
+.header-actions{
+display:flex;
+align-items:center;
+gap:10px;
+}
+
+.anoSelect{
+padding:9px 14px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+background:#3a3f48;
+color:white;
+font-size:14px;
+font-weight:600;
+outline:none;
+transition:0.2s;
+}
+
+.anoSelect:hover{
+background:#505662;
+}
+
 button{
 padding:10px 18px;
 border:none;
@@ -101,12 +124,38 @@ min-width:200px;
 
 /* SELECT */
 select{
-padding:8px;
+padding:8px 12px;
 margin-top:15px;
 border-radius:6px;
 border:none;
 background:#3a3f48;
 color:white;
+outline:none;
+}
+
+/* LEGENDA DISCRETA */
+.legenda{
+display:flex;
+justify-content:center;
+gap:12px;
+flex-wrap:wrap;
+margin:20px auto 0 auto;
+max-width:550px;
+font-size:13px;
+color:#d0d4dc;
+}
+
+.legenda-item{
+display:flex;
+align-items:center;
+gap:6px;
+}
+
+.legenda-cor{
+width:14px;
+height:14px;
+border-radius:4px;
+display:inline-block;
 }
 
 /* CALENDÁRIO */
@@ -157,6 +206,13 @@ cursor:default;
 outline:2px solid #5cff8f;
 }
 
+.feriado{
+background:#f1f1f1;
+color:#111;
+font-weight:600;
+border:2px solid #ffffff30;
+}
+
 /* 📱 MOBILE */
 @media (max-width:768px){
 
@@ -168,6 +224,11 @@ gap:10px;
 
 header h1{
 font-size:18px;
+}
+
+.header-actions{
+width:100%;
+justify-content:center;
 }
 
 .container{
@@ -205,20 +266,17 @@ padding:12px;
 font-size:15px;
 }
 
-button{
+button, .anoSelect{
 width:100%;
 margin-top:10px;
 font-size:14px;
 }
 
+.legenda{
+font-size:12px;
+gap:8px;
 }
 
-
-.feriado{
-background:#f1f1f1;
-color:#111;
-font-weight:600;
-border:2px solid #ffffff30;
 }
 
 </style>
@@ -228,7 +286,10 @@ border:2px solid #ffffff30;
 
 <header>
 <h1>Painel de Entregas RDO</h1>
-<button onclick="window.location.href='index.html'">Início</button>
+<div class="header-actions">
+  <select id="anoSelector" class="anoSelect" onchange="trocarAno(this.value)"></select>
+  <button onclick="window.location.href='index.html'">Início</button>
+</div>
 </header>
 
 <div class="container">
@@ -278,19 +339,28 @@ border:2px solid #ffffff30;
 
 <div class="card">
 <h3>RDO entregues</h3>
-<p id="entregues"></p>
+<p id="entregues">0</p>
 </div>
 
 <div class="card">
 <h3>Pendentes</h3>
-<p id="pendentes"></p>
+<p id="pendentes">0</p>
 </div>
 
 <div class="card">
 <h3>Status</h3>
-<p id="status"></p>
+<p id="status">-</p>
 </div>
 
+</div>
+
+<!-- Legenda explicativa mantendo o layout -->
+<div class="legenda">
+  <div class="legenda-item"><span class="legenda-cor" style="background:#2d9b5f"></span> Entregue</div>
+  <div class="legenda-item"><span class="legenda-cor" style="background:#a13a3a"></span> Pendente</div>
+  <div class="legenda-item"><span class="legenda-cor" style="background:#f1f1f1"></span> Feriado</div>
+  <div class="legenda-item"><span class="legenda-cor" style="background:#3a3f48"></span> Fim de Semana</div>
+  <div class="legenda-item"><span class="legenda-cor" style="background:#2b3038; outline:2px solid #5cff8f"></span> Hoje</div>
 </div>
 
 <div class="calendar" id="calendar"></div>
@@ -301,29 +371,19 @@ border:2px solid #ffffff30;
 
 <script>
 
-let areaAtual=""
-let mesAtual=""
-
-/*
-FORMATO:
-"DD.MM"
-
-Exemplo:
-"25.12" = 25 de dezembro
-*/
+let dadosRDO = {}
+let anoAtual = ""
+let areaAtual = ""
+let mesAtual = ""
 
 const feriados = [
-
 /* 2026 */
-
 "01.01", // Confraternização Universal
 "16.02", // Carnaval
 "17.02", // Carnaval
 "03.04", // Sexta-feira Santa
-
 "20.04", // Folga empresa
 "21.04", // Tiradentes
-
 "01.05", // Dia do Trabalhador
 "04.06", // Corpus Christi
 "07.09", // Independência
@@ -332,149 +392,178 @@ const feriados = [
 "02.11", // Finados
 "15.11", // Proclamação
 "25.12"  // Natal
-
 ]
 
+function normalizar(txt){
+  return (txt || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+}
+
+async function carregarDados(){
+  try{
+    const res = await fetch("/api/rdos")
+    dadosRDO = await res.json()
+
+    const anos = Object.keys(dadosRDO)
+    if(anos.length === 0) return
+
+    const select = document.getElementById("anoSelector")
+    select.innerHTML = ""
+    anos.forEach(ano => {
+      const opt = document.createElement("option")
+      opt.value = ano
+      opt.innerText = ano
+      select.appendChild(opt)
+    })
+
+    const anoSalvo = localStorage.getItem("anoRDO")
+    anoAtual = (anoSalvo && anos.includes(anoSalvo)) ? anoSalvo : anos[anos.length - 1]
+    select.value = anoAtual
+
+    // Definir mês corrente no seletor inicialmente se for o ano atual
+    const hoje = new Date()
+    if(hoje.getFullYear() == anoAtual){
+      const meses = [
+        "Janeiro","Fevereiro","Marco","Abril","Maio","Junho",
+        "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"
+      ]
+      document.getElementById("mesFiltro").selectedIndex = hoje.getMonth()
+    }
+
+  }catch(e){
+    console.error("Erro ao carregar:", e)
+  }
+}
+
+function trocarAno(novoAno){
+  anoAtual = novoAno
+  localStorage.setItem("anoRDO", anoAtual)
+  if(areaAtual){
+    gerarCalendario()
+  }
+}
+
 function selecionarArea(area){
-
-areaAtual = area
-
-document.getElementById("infoArea").style.display="block"
-document.getElementById("tituloArea").innerText=area
-
-mesAtual = document.getElementById("mesFiltro").value
-
-gerarCalendario()
+  areaAtual = area
+  document.getElementById("infoArea").style.display = "block"
+  document.getElementById("tituloArea").innerText = area + " (" + anoAtual + ")"
+  mesAtual = document.getElementById("mesFiltro").value
+  gerarCalendario()
 }
 
 function gerarCalendario(){
+  mesAtual = document.getElementById("mesFiltro").value
+  document.getElementById("tituloArea").innerText = areaAtual + " (" + anoAtual + ")"
 
-mesAtual = document.getElementById("mesFiltro").value
+  if(!dadosRDO[anoAtual]){
+    document.getElementById("calendar").innerHTML = "Dados não encontrados para este ano"
+    return
+  }
 
-fetch("/api/rdos")
-.then(res=>res.json())
-.then(data=>{
+  const areaKey = Object.keys(dadosRDO[anoAtual]).find(a => normalizar(a) === normalizar(areaAtual))
+  if(!areaKey){
+    document.getElementById("calendar").innerHTML = "<p style='grid-column:1/-1; color:#9aa0a6;'>Área não cadastrada para este ano</p>"
+    return
+  }
 
-const ano = Object.keys(data)[0]
+  const mesKey = Object.keys(dadosRDO[anoAtual][areaKey] || {}).find(m => normalizar(m) === normalizar(mesAtual))
+  const arquivos = (mesKey && dadosRDO[anoAtual][areaKey][mesKey]) ? dadosRDO[anoAtual][areaKey][mesKey] : []
 
-const areaKey = Object.keys(data[ano]).find(a => a.toLowerCase() === areaAtual.toLowerCase())
-if(!areaKey) return
+  let diasEntregues = arquivos.map(nome => {
+    let match = nome.match(/^(\d{2})/)
+    return match ? parseInt(match[1]) : null
+  }).filter(Boolean)
 
-const mesKey = Object.keys(data[ano][areaKey]).find(m => m.toLowerCase() === mesAtual.toLowerCase())
-if(!mesKey) return
+  const calendar = document.getElementById("calendar")
+  calendar.innerHTML = ""
 
-const arquivos = data[ano][areaKey][mesKey]
+  let meses = [
+    "Janeiro","Fevereiro","Marco","Abril","Maio","Junho",
+    "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"
+  ]
 
-let diasEntregues = arquivos.map(nome => {
-let match = nome.match(/^(\d{2})/)
-return match ? parseInt(match[1]) : null
-}).filter(Boolean)
+  let mesIndex = meses.findIndex(m => normalizar(m) === normalizar(mesAtual))
+  let diasNoMes = new Date(anoAtual, mesIndex + 1, 0).getDate()
 
-const calendar=document.getElementById("calendar")
-calendar.innerHTML=""
+  let entreguesCount = 0
+  let pendentesCount = 0
 
-let meses = [
-"Janeiro","Fevereiro","Marco","Abril","Maio","Junho",
-"Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"
-]
+  let hoje = new Date()
+  let diaAtual = hoje.getDate()
+  let mesAtualNum = hoje.getMonth()
+  let anoAtualNum = hoje.getFullYear()
 
-let mesIndex = meses.findIndex(m => m.toLowerCase() === mesAtual.toLowerCase())
-let diasNoMes = new Date(ano, mesIndex+1, 0).getDate()
+  let isMesAtual = (mesIndex === mesAtualNum && anoAtual == anoAtualNum)
+  let isMesPassado = (anoAtual < anoAtualNum || (anoAtual == anoAtualNum && mesIndex < mesAtualNum))
+  let isMesFuturo = (anoAtual > anoAtualNum || (anoAtual == anoAtualNum && mesIndex > mesAtualNum))
 
-let entreguesCount=0
-let pendentesCount=0
+  let primeiroDia = new Date(anoAtual, mesIndex, 1).getDay()
 
-let hoje = new Date()
-let diaAtual = hoje.getDate()
-let mesAtualNum = hoje.getMonth()
-let anoAtual = hoje.getFullYear()
+  for(let i = 0; i < primeiroDia; i++){
+    let vazio = document.createElement("div")
+    calendar.appendChild(vazio)
+  }
 
-let isMesAtual = (mesIndex === mesAtualNum && ano == anoAtual)
+  for(let d = 1; d <= diasNoMes; d++){
+    let dataDia = new Date(anoAtual, mesIndex, d)
+    let diaSemana = dataDia.getDay()
 
-let primeiroDia = new Date(ano, mesIndex, 1).getDay()
+    let div = document.createElement("div")
+    div.classList.add("day")
+    div.innerText = d
 
-for(let i=0; i<primeiroDia; i++){
-let vazio=document.createElement("div")
-calendar.appendChild(vazio)
+    let dataFormatada =
+      String(d).padStart(2, '0') + "." +
+      String(mesIndex + 1).padStart(2, '0')
+
+    let isFeriado = feriados.includes(dataFormatada)
+
+    if(d === diaAtual && isMesAtual){
+      div.classList.add("hoje")
+    }
+
+    if(isFeriado){
+      div.classList.add("feriado")
+    } else if(diaSemana === 0 || diaSemana === 6){
+      div.classList.add("fimSemana")
+    } else {
+      if(diasEntregues.includes(d)){
+        div.classList.add("entregue")
+        entreguesCount++
+
+        div.onclick = () => {
+          let arquivosDoDia = arquivos.filter(a => a.startsWith(String(d).padStart(2, '0')))
+          if(arquivosDoDia.length > 0){
+            window.open(`/arquivos/${anoAtual}/${areaKey}/${mesKey}/${encodeURIComponent(arquivosDoDia[0])}`)
+          }
+        }
+      } else {
+        if(isMesFuturo || (isMesAtual && d > diaAtual)){
+          div.classList.add("futuro")
+        } else {
+          div.classList.add("pendente")
+          pendentesCount++
+        }
+      }
+    }
+
+    calendar.appendChild(div)
+  }
+
+  document.getElementById("entregues").innerText = entreguesCount
+  document.getElementById("pendentes").innerText = pendentesCount
+
+  let status = document.getElementById("status")
+
+  if(pendentesCount <= 2){
+    status.innerHTML = "<span style='color:#5cff8f'>Em dia</span>"
+  } else if(pendentesCount <= 5){
+    status.innerHTML = "<span style='color:#ffd84d'>Atenção</span>"
+  } else {
+    status.innerHTML = "<span style='color:#ff5c5c'>Atrasado</span>"
+  }
 }
 
-for(let d=1; d<=diasNoMes; d++){
-
-let dataDia=new Date(ano,mesIndex,d)
-let diaSemana=dataDia.getDay()
-
-let div=document.createElement("div")
-div.classList.add("day")
-div.innerText=d
-
-let dataFormatada =
-String(d).padStart(2,'0') + "." +
-String(mesIndex + 1).padStart(2,'0')
-
-let isFeriado = feriados.includes(dataFormatada)
-
-if(d === diaAtual && isMesAtual){
-div.classList.add("hoje")
-}
-
-if(isFeriado){
-
-div.classList.add("feriado")
-
-}else if(diaSemana==0 || diaSemana==6){
-
-div.classList.add("fimSemana")
-
-}else{
-
-if(diasEntregues.includes(d)){
-
-div.classList.add("entregue")
-entreguesCount++
-
-div.onclick = () => { 
-let arquivosDoDia = arquivos.filter(a => a.startsWith(String(d).padStart(2,'0'))) 
-    
-if(arquivosDoDia.length > 0){ 
-window.open(`/arquivos/${ano}/${areaKey}/${mesKey}/${arquivosDoDia[0]}`)
-} 
-}
-
-}else{
-
-if(isMesAtual && d > diaAtual){
-div.classList.add("futuro")
-}else{
-div.classList.add("pendente")
-pendentesCount++
-}
-
-}
-
-}
-
-calendar.appendChild(div)
-}
-
-document.getElementById("entregues").innerText=entreguesCount
-document.getElementById("pendentes").innerText=pendentesCount
-
-let status=document.getElementById("status")
-
-if(pendentesCount<=2){
-status.innerHTML="<span style='color:#5cff8f'>Em dia</span>"
-}else if(pendentesCount<=5){
-status.innerHTML="<span style='color:#ffd84d'>Atenção</span>"
-}else{
-status.innerHTML="<span style='color:#ff5c5c'>Atrasado</span>"
-}
-
-})
-.catch(()=>{
-document.getElementById("calendar").innerHTML="Erro ao carregar dados"
-})
-
-}
+carregarDados()
 
 </script>
 
